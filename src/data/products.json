@@ -1,0 +1,122 @@
+[
+  {
+    "id": "sh-01",
+    "name": "Bayam Ikat",
+    "category": "Sayur Hijau & Daun",
+    "image": "/images/bayam.jpg",
+    "emoji": "🥬",
+    "isAvailable": true
+  },
+  {
+    "id": "sh-02",
+    "name": "Kangkung",
+    "category": "Sayur Hijau & Daun",
+    "image": "/images/kangkung.jpg",
+    "emoji": "🌿",
+    "isAvailable": true
+  },
+  {
+    "id": "sh-03",
+    "name": "Sawi Hijau",
+    "category": "Sayur Hijau & Daun",
+    "image": "/images/sawi.jpg",
+    "emoji": "🥦",
+    "isAvailable": true
+  },
+  {
+    "id": "sk-01",
+    "name": "Wortel Lokal (per 500gr)",
+    "category": "Sayur Sop & Kuah",
+    "image": "/images/wortel.jpg",
+    "emoji": "🥕",
+    "isAvailable": true
+  },
+  {
+    "id": "sk-02",
+    "name": "Kentang Dieng (per 500gr)",
+    "category": "Sayur Sop & Kuah",
+    "image": "/images/kentang.jpg",
+    "emoji": "🥔",
+    "isAvailable": true
+  },
+  {
+    "id": "sk-03",
+    "name": "Tomat Segar (per 500gr)",
+    "category": "Sayur Sop & Kuah",
+    "image": "/images/tomat.jpg",
+    "emoji": "🍅",
+    "isAvailable": true
+  },
+  {
+    "id": "bd-01",
+    "name": "Cabai Rawit Merah (per 100gr)",
+    "category": "Bumbu Dapur & Cabai",
+    "image": "/images/cabai-rawit.jpg",
+    "emoji": "🌶️",
+    "isAvailable": true
+  },
+  {
+    "id": "bd-02",
+    "name": "Bawang Merah (per 250gr)",
+    "category": "Bumbu Dapur & Cabai",
+    "image": "/images/bawang-merah.jpg",
+    "emoji": "🧅",
+    "isAvailable": true
+  },
+  {
+    "id": "bd-03",
+    "name": "Bawang Putih (per 250gr)",
+    "category": "Bumbu Dapur & Cabai",
+    "image": "/images/bawang-putih.jpg",
+    "emoji": "🧄",
+    "isAvailable": false
+  },
+  {
+    "id": "lk-01",
+    "name": "Ayam Fillet Segar (per 500gr)",
+    "category": "Lauk & Daging",
+    "image": "/images/ayam-fillet.jpg",
+    "emoji": "🍗",
+    "isAvailable": true
+  },
+  {
+    "id": "lk-02",
+    "name": "Tempe Papan Bulat",
+    "category": "Lauk & Daging",
+    "image": "/images/tempe.jpg",
+    "emoji": "🟫",
+    "isAvailable": true
+  },
+  {
+    "id": "lk-03",
+    "name": "Tahu Putih (per 5 buah)",
+    "category": "Lauk & Daging",
+    "image": "/images/tahu.jpg",
+    "emoji": "🍢",
+    "isAvailable": true
+  },
+  {
+    "id": "pk-01",
+    "name": "Paket Sayur Asem Lengkap",
+    "category": "Paket Siap Masak",
+    "image": "/images/paket-asem.jpg",
+    "emoji": "🍲",
+    "isAvailable": true
+  },
+  {
+    "id": "pk-02",
+    "name": "Paket Sop Bakso (Sayur + Bakso + Bumbu)",
+    "category": "Paket Siap Masak",
+    "image": "/images/paket-sop.jpg",
+    "emoji": "🥣",
+    "isAvailable": true
+  },
+  {
+    "id": "pk-03",
+    "name": "Paket Capcay Komplit",
+    "category": "Paket Siap Masak",
+    "image": "/images/paket-capcay.jpg",
+    "emoji": "🥘",
+    "isAvailable": true
+  }
+]
