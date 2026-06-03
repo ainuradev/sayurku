@@ -5,9 +5,9 @@ import { Product, CartItem } from "@/types";
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (product: Product) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addToCart: (product: Product, selectedUnit: string) => void;
+  removeFromCart: (cartItemId: string) => void;
+  updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
   totalItems: number;
 }
@@ -38,30 +38,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [cartItems, isMounted]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, selectedUnit: string) => {
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
+      // Membuat ID unik berdasarkan ID produk + Satuan (Misal: "uuid-250gr")
+      const cartItemId = `${product.id}-${selectedUnit}`;
+      const existingItem = prevItems.find((item) => item.cartItemId === cartItemId);
+      
       if (existingItem) {
         return prevItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.cartItemId === cartItemId
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
         );
       }
-      return [...prevItems, { ...product, quantity: 1 }];
+      return [...prevItems, { ...product, cartItemId, selectedUnit, quantity: 1 }];
     });
   };
 
-  const removeFromCart = (productId: string) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
+  const removeFromCart = (cartItemId: string) => {
+    setCartItems((prevItems) => prevItems.filter((item) => item.cartItemId !== cartItemId));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (cartItemId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(cartItemId);
       return;
     }
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
+        item.cartItemId === cartItemId ? { ...item, quantity } : item
       )
     );
   };

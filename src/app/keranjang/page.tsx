@@ -9,7 +9,8 @@ import EmptyCart from "@/components/EmptyCart";
 const WHATSAPP_NUMBER = "6288293427818";
 
 export default function CartPage() {
-  const { cartItems, totalItems, updateQuantity, removeFromCart } = useCart();
+  const { cartItems, totalItems, updateQuantity, removeFromCart, clearCart } = useCart();
+  const [isOrderSuccess, setIsOrderSuccess] = useState(false);
   const [formData, setFormData] = useState<CheckoutFormData>({
     nama: "",
     metode: "",
@@ -37,7 +38,11 @@ export default function CartPage() {
     }
 
     let listBelanja = cartItems
-      .map((item) => `- ${item.emoji} ${item.name} (${item.quantity}x)`)
+      .map((item) => {
+        // Jika quantity > 1, tambahkan tulisan "2 x " di depannya. Jika tidak, kosongkan saja.
+        const qtyString = item.quantity > 1 ? `${item.quantity} x ` : "";
+        return `- ${item.emoji} ${item.name} (${qtyString}${item.selectedUnit})`;
+      })
       .join("\n");
 
     let text = `Halo Sayurku! 👋\n\nSaya mau cek harga & pesan:\n\n${listBelanja}\n\n`;
@@ -53,6 +58,12 @@ export default function CartPage() {
 
     const encoded = encodeURIComponent(text);
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`, "_blank");
+
+    // Hapus isi keranjang setelah kirim ke WA
+    clearCart();
+    
+    // Tampilkan pesan sukses
+    setIsOrderSuccess(true);
   };
 
   const handleMetodeChange = (metode: DeliveryMethod) => {
@@ -62,6 +73,27 @@ export default function CartPage() {
   const handlePembayaranChange = (pembayaran: PaymentMethod) => {
     setFormData((prev) => ({ ...prev, pembayaran }));
   };
+
+  // Tampilan jika pesanan sudah berhasil dibuat
+  if (isOrderSuccess) {
+    return (
+      <div className="mx-auto flex min-h-[80vh] max-w-md flex-col items-center justify-center px-4 text-center">
+        <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-100">
+          <span className="text-5xl">✅</span>
+        </div>
+        <h2 className="mb-2 text-2xl font-bold text-gray-900">Pesanan Dibuat!</h2>
+        <p className="mb-8 text-sm text-gray-500">
+          Detail pesanan Anda telah dibuka di WhatsApp. Keranjang Anda sekarang sudah kosong kembali. Silakan tunggu balasan dan konfirmasi harga dari lapak kami.
+        </p>
+        <Link
+          href="/"
+          className="rounded-xl bg-green-700 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-green-900/20 transition hover:bg-green-800 active:scale-95"
+        >
+          Belanja Lagi
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto min-h-screen max-w-2xl px-4 py-6 pb-28 sm:py-10 md:pb-10">
@@ -92,7 +124,7 @@ export default function CartPage() {
             <div className="space-y-0 divide-y divide-gray-100">
               {cartItems.map((item) => (
                 <div
-                  key={item.id}
+                  key={item.cartItemId}
                   className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
                 >
                   {/* Emoji */}
@@ -105,14 +137,20 @@ export default function CartPage() {
                     <h3 className="truncate text-sm font-semibold text-gray-800">
                       {item.name}
                     </h3>
-                    <p className="text-[11px] text-gray-400">{item.category}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[11px] font-medium text-gray-500">{item.category}</span>
+                      <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                      <span className="text-[11px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded-md">
+                        {item.selectedUnit}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Qty Control */}
                   <div className="flex items-center gap-1.5">
                     <div className="flex h-8 items-center overflow-hidden rounded-lg border border-green-200 bg-green-50">
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
                         className="flex h-full w-8 items-center justify-center text-sm font-bold text-green-700 transition hover:bg-green-100"
                       >
                         −
@@ -121,14 +159,14 @@ export default function CartPage() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
                         className="flex h-full w-8 items-center justify-center text-sm font-bold text-green-700 transition hover:bg-green-100"
                       >
                         +
                       </button>
                     </div>
                     <button
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => removeFromCart(item.cartItemId)}
                       className="rounded-lg p-1.5 text-gray-300 transition hover:bg-red-50 hover:text-red-500"
                       aria-label="Hapus item"
                     >
@@ -144,7 +182,7 @@ export default function CartPage() {
             {/* Divider + Summary */}
             <div className="mt-4 border-t border-gray-100 pt-3">
               <p className="text-sm font-medium text-gray-500">
-                Total <span className="font-bold text-gray-800">{cartItems.length}</span> jenis produk · <span className="font-bold text-gray-800">{totalItems}</span> item
+                Total <span className="font-bold text-gray-800">{cartItems.length}</span> jenis satuan · <span className="font-bold text-gray-800">{totalItems}</span> item
               </p>
             </div>
 

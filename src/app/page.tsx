@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import productsData from "@/data/products.json";
+import { supabase } from "@/lib/supabase";
 import ProductCard from "@/components/ProductCard";
 import { Product } from "@/types";
 import { useCart } from "@/context/CartContext";
-
-const products = productsData as Product[];
 
 const categoryTabs = [
   { id: "Semua", label: "✦ Semua" },
@@ -21,6 +19,28 @@ const categoryTabs = [
 export default function Home() {
   const { totalItems } = useCart();
   const [activeCategory, setActiveCategory] = useState("Semua");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch dari Supabase saat komponen di-mount
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .order("sort_order", { ascending: true });
+
+        if (error) throw error;
+        setProducts(data as Product[]);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchProducts();
+  }, []);
 
   const filteredProducts =
     activeCategory === "Semua"
@@ -34,7 +54,6 @@ export default function Home() {
     <div className="relative flex min-h-screen flex-col">
       {/* ===== HERO SECTION ===== */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[#14532D] via-[#1a5c34] to-[#166534]">
-        {/* Decorative curve */}
         <div className="absolute -bottom-1 left-0 right-0">
           <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
             <path d="M0 60V30C240 0 480 0 720 15C960 30 1200 45 1440 30V60H0Z" fill="#F7FBF2" />
@@ -75,13 +94,16 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Section Label */}
         <p className="mb-5 mt-4 text-xs font-bold uppercase tracking-widest text-gray-400">
           {activeCategory === "Semua" ? "Semua Produk" : activeCategoryLabel}
         </p>
 
         {/* Product Grid */}
-        {filteredProducts.length > 0 ? (
+        {isLoading ? (
+          <div className="flex h-40 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-green-200 border-t-green-700"></div>
+          </div>
+        ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
@@ -97,7 +119,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* ===== FOOTER ===== */}
       <footer className="mt-auto border-t border-gray-200 bg-white px-4 py-8 text-center">
         <div className="mx-auto max-w-6xl">
           <p className="text-sm font-semibold text-gray-500">
@@ -109,7 +130,6 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* ===== FLOATING CART (mobile) ===== */}
       {totalItems > 0 && (
         <div className="fixed bottom-5 left-4 right-4 z-50 md:hidden">
           <Link

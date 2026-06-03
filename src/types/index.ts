@@ -2,13 +2,18 @@ export interface Product {
   id: string;
   name: string;
   category: string;
-  image: string;
-  emoji: string; // emoji representasi produk, contoh: "🥬"
-  isAvailable: boolean;
+  emoji: string;
+  unit_type: "weight" | "unit";
+  unit_options: string[];
+  is_available: boolean;
+  sort_order: number;
+  created_at: string;
 }
 
 export interface CartItem extends Product {
+  cartItemId: string; // ID unik keranjang (agar produk yang sama dengan satuan berbeda tidak menumpuk)
   quantity: number;
+  selectedUnit: string; // Satuan yang dipilih user: "250gr", "1 kg", "1 ikat", dll
 }
 
 export type DeliveryMethod = "Diantar ke Rumah" | "Ambil Sendiri";
