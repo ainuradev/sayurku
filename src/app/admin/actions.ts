@@ -78,3 +78,44 @@ export async function deleteProduct(id: string) {
   revalidatePath("/admin");
   return { success: true };
 }
+
+export async function updateProduct(id: string, formData: FormData) {
+  const name = formData.get("name") as string;
+  const category = formData.get("category") as string;
+  const emoji = (formData.get("emoji") as string) || "🥬";
+  const unit_type = formData.get("unit_type") as "weight" | "unit";
+  const unit_options_raw = formData.get("unit_options") as string;
+  const sort_order = parseInt((formData.get("sort_order") as string) || "0");
+  const image_url = formData.get("image_url") as string | null;
+
+  let unit_options: string[] = [];
+  if (unit_type === "unit" && unit_options_raw) {
+    unit_options = unit_options_raw.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+
+  // Bangun payload update — hanya sertakan image_url jika ada nilai baru
+  const payload: Record<string, unknown> = {
+    name,
+    category,
+    emoji,
+    unit_type,
+    unit_options,
+    sort_order,
+  };
+  if (image_url) payload.image_url = image_url;
+
+  const adminClient = getSupabaseAdmin();
+  const { error } = await adminClient
+    .from("products")
+    .update(payload)
+    .eq("id", id);
+
+  if (error) {
+    console.error("Update Product Error:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return { success: true };
+}
