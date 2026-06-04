@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { supabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
 
 const ADMIN_PIN = "123456";
@@ -32,7 +32,8 @@ export async function addProduct(formData: FormData) {
     unit_options = unit_options_raw.split(",").map((s) => s.trim()).filter(Boolean);
   }
 
-  const { error } = await supabaseAdmin.from("products").insert([
+  const adminClient = getSupabaseAdmin();
+  const { error } = await adminClient.from("products").insert([
     {
       name,
       category,
@@ -55,7 +56,8 @@ export async function addProduct(formData: FormData) {
 }
 
 export async function toggleProductAvailability(id: string, is_available: boolean) {
-  const { error } = await supabaseAdmin
+  const adminClient = getSupabaseAdmin();
+  const { error } = await adminClient
     .from("products")
     .update({ is_available })
     .eq("id", id);
@@ -67,7 +69,8 @@ export async function toggleProductAvailability(id: string, is_available: boolea
 }
 
 export async function deleteProduct(id: string) {
-  const { error } = await supabaseAdmin.from("products").delete().eq("id", id);
+  const adminClient = getSupabaseAdmin();
+  const { error } = await adminClient.from("products").delete().eq("id", id);
   if (error) return { success: false, error: error.message };
   revalidatePath("/");
   revalidatePath("/admin");

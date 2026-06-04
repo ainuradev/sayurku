@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { supabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import AdminLogin from "@/components/AdminLogin";
 import AdminDashboard from "@/components/AdminDashboard";
 import { Product } from "@/types";
@@ -20,7 +20,8 @@ export default async function AdminPage() {
 
   // Jika menggunakan supabaseAdmin (Server Only), pastikan key-nya terisi di env.local
   // SupabaseAdmin bypasses RLS
-  const { data, error } = await supabaseAdmin
+  const adminClient = getSupabaseAdmin();
+  const { data, error } = await adminClient
     .from("products")
     .select("*")
     .order("sort_order", { ascending: true })
