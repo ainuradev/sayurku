@@ -25,4 +25,5 @@ export interface CheckoutFormData {
   alamat: string;
   jamAntar: string;
   pembayaran: PaymentMethod | "";
+  catatan: string;
 }

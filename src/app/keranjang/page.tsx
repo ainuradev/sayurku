@@ -17,6 +17,7 @@ export default function CartPage() {
     alamat: "",
     jamAntar: "",
     pembayaran: "",
+    catatan: "",
   });
 
   const handlePesanViaWA = () => {
@@ -26,10 +27,6 @@ export default function CartPage() {
     }
     if (!formData.metode) {
       alert("Mohon pilih Metode Pengambilan.");
-      return;
-    }
-    if (formData.metode === "Diantar ke Rumah" && !formData.alamat.trim()) {
-      alert("Mohon isi Alamat Lengkap untuk pengantaran.");
       return;
     }
     if (!formData.pembayaran) {
@@ -49,19 +46,16 @@ export default function CartPage() {
     text += `📋 *Detail Pesanan:*\n`;
     text += `Nama: ${formData.nama}\n`;
     text += `Metode: ${formData.metode}\n`;
-    if (formData.metode === "Diantar ke Rumah") {
-      text += `Alamat: ${formData.alamat}\n`;
-      if (formData.jamAntar) text += `Jam Antar: ${formData.jamAntar}\n`;
-    }
-    text += `Pembayaran: ${formData.pembayaran}\n\n`;
-    text += `Mohon konfirmasi harga ya, terima kasih! 🙏`;
+    text += `Pembayaran: ${formData.pembayaran}\n`;
+    if (formData.catatan.trim()) text += `Catatan: ${formData.catatan}\n`;
+    text += `\nMohon konfirmasi harga ya, terima kasih! 🙏`;
 
     const encoded = encodeURIComponent(text);
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`, "_blank");
 
     // Hapus isi keranjang setelah kirim ke WA
     clearCart();
-    
+
     // Tampilkan pesan sukses
     setIsOrderSuccess(true);
   };
@@ -180,9 +174,12 @@ export default function CartPage() {
             </div>
 
             {/* Divider + Summary */}
-            <div className="mt-4 border-t border-gray-100 pt-3">
+            <div className="mt-4 border-t border-gray-100 pt-3 flex items-center justify-between">
               <p className="text-sm font-medium text-gray-500">
-                Total <span className="font-bold text-gray-800">{cartItems.length}</span> jenis satuan · <span className="font-bold text-gray-800">{totalItems}</span> item
+                <span className="font-bold text-gray-800">{cartItems.length}</span> jenis produk
+              </p>
+              <p className="text-sm font-semibold text-green-700 bg-green-50 px-3 py-1 rounded-full">
+                Total <span className="font-bold">{totalItems}</span> item
               </p>
             </div>
 
@@ -222,69 +219,40 @@ export default function CartPage() {
                   Metode Pengambilan <span className="text-red-400">*</span>
                 </label>
                 <div className="grid grid-cols-2 gap-3">
-                  {(["Diantar ke Rumah", "Ambil Sendiri"] as DeliveryMethod[]).map(
-                    (method) => {
-                      const isActive = formData.metode === method;
-                      const emoji = method === "Diantar ke Rumah" ? "🚗" : "🏃";
-                      return (
-                        <button
-                          key={method}
-                          onClick={() => handleMetodeChange(method)}
-                          className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all sm:flex-row sm:gap-3 sm:p-4 sm:text-left ${
-                            isActive
-                              ? "border-green-600 bg-green-50 shadow-sm"
-                              : "border-gray-200 bg-white hover:border-green-300"
-                          }`}
-                        >
-                          <span className="text-xl">{emoji}</span>
-                          <span className="text-xs font-semibold text-gray-700 sm:text-sm">
-                            {method}
-                          </span>
-                        </button>
-                      );
-                    }
-                  )}
+                  {/* Diantar ke Rumah — Coming Soon */}
+                  <div className="relative">
+                    <div className="flex flex-col items-center gap-1 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-3 text-center opacity-60 cursor-not-allowed select-none sm:flex-row sm:gap-3 sm:p-4 sm:text-left">
+                      <span className="text-xl">🚗</span>
+                      <span className="text-xs font-semibold text-gray-400 sm:text-sm">Diantar ke Rumah</span>
+                    </div>
+                    <span className="absolute -top-2 -right-2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm whitespace-nowrap">
+                      🚧 Segera Hadir
+                    </span>
+                  </div>
+
+                  {/* Ambil Sendiri */}
+                  <button
+                    onClick={() => handleMetodeChange("Ambil Sendiri")}
+                    className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all sm:flex-row sm:gap-3 sm:p-4 sm:text-left ${
+                      formData.metode === "Ambil Sendiri"
+                        ? "border-green-600 bg-green-50 shadow-sm"
+                        : "border-gray-200 bg-white hover:border-green-300"
+                    }`}
+                  >
+                    <span className="text-xl">🏃</span>
+                    <span className="text-xs font-semibold text-gray-700 sm:text-sm">Ambil Sendiri</span>
+                  </button>
                 </div>
               </div>
 
-              {/* Conditional: Address */}
-              {formData.metode === "Diantar ke Rumah" && (
-                <div className="animate-slideDown space-y-4 rounded-xl border border-gray-100 bg-gray-50/70 p-4">
-                  <div>
-                    <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-                      Alamat Lengkap <span className="text-red-400">*</span>
-                    </label>
-                    <textarea
-                      placeholder="Contoh: Jl. Mawar No.5, RT 02/03, dekat warung Pak Budi"
-                      value={formData.alamat}
-                      onChange={(e) => setFormData({ ...formData, alamat: e.target.value })}
-                      rows={3}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-                      Jam Antar <span className="text-gray-400 font-normal">(opsional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Contoh: 07.00 - 08.00"
-                      value={formData.jamAntar}
-                      onChange={(e) => setFormData({ ...formData, jamAntar: e.target.value })}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Conditional: Pickup */}
+              {/* Conditional: Pickup info */}
               {formData.metode === "Ambil Sendiri" && (
                 <div className="animate-slideDown rounded-xl border border-green-200 bg-green-50 p-4">
                   <p className="text-sm leading-relaxed text-green-800">
-                    📍 <strong>Alamat Lapak:</strong> [Isi dengan alamat lapakmu sendiri]
+                    📍 <strong>Alamat Lapak:</strong> Pasar Tohaga Cibinong
                   </p>
                   <p className="mt-1 text-sm text-green-800">
-                    ⏰ Buka mulai pukul 07.00 WIB
+                    ⏰ Buka mulai pukul 02.00 - 15.00 WIB
                   </p>
                 </div>
               )}
@@ -318,6 +286,20 @@ export default function CartPage() {
                     }
                   )}
                 </div>
+              </div>
+
+              {/* Catatan Tambahan */}
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                  Catatan Tambahan <span className="text-gray-400 font-normal">(opsional)</span>
+                </label>
+                <textarea
+                  placeholder="Contoh: tolong pilihkan yang segar, minta dikupas, dll."
+                  value={formData.catatan}
+                  onChange={(e) => setFormData({ ...formData, catatan: e.target.value })}
+                  rows={2}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-800 outline-none transition-all focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-500/20"
+                />
               </div>
             </div>
           </div>
