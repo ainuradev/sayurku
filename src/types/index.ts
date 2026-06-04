@@ -3,6 +3,7 @@ export interface Product {
   name: string;
   category: string;
   emoji: string;
+  image_url?: string | null;
   unit_type: "weight" | "unit";
   unit_options: string[];
   is_available: boolean;

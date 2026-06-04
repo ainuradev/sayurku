@@ -6,7 +6,7 @@ import { useCart } from "@/context/CartContext";
 import { CheckoutFormData, DeliveryMethod, PaymentMethod } from "@/types";
 import EmptyCart from "@/components/EmptyCart";
 
-const WHATSAPP_NUMBER = "6288293427818";
+const WHATSAPP_NUMBER = "6281387842053";
 
 export default function CartPage() {
   const { cartItems, totalItems, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -233,11 +233,10 @@ export default function CartPage() {
                   {/* Ambil Sendiri */}
                   <button
                     onClick={() => handleMetodeChange("Ambil Sendiri")}
-                    className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all sm:flex-row sm:gap-3 sm:p-4 sm:text-left ${
-                      formData.metode === "Ambil Sendiri"
-                        ? "border-green-600 bg-green-50 shadow-sm"
-                        : "border-gray-200 bg-white hover:border-green-300"
-                    }`}
+                    className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all sm:flex-row sm:gap-3 sm:p-4 sm:text-left ${formData.metode === "Ambil Sendiri"
+                      ? "border-green-600 bg-green-50 shadow-sm"
+                      : "border-gray-200 bg-white hover:border-green-300"
+                      }`}
                   >
                     <span className="text-xl">🏃</span>
                     <span className="text-xs font-semibold text-gray-700 sm:text-sm">Ambil Sendiri</span>
@@ -271,11 +270,10 @@ export default function CartPage() {
                         <button
                           key={method}
                           onClick={() => handlePembayaranChange(method)}
-                          className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all sm:flex-row sm:gap-3 sm:p-4 sm:text-left ${
-                            isActive
-                              ? "border-green-600 bg-green-50 shadow-sm"
-                              : "border-gray-200 bg-white hover:border-green-300"
-                          }`}
+                          className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all sm:flex-row sm:gap-3 sm:p-4 sm:text-left ${isActive
+                            ? "border-green-600 bg-green-50 shadow-sm"
+                            : "border-gray-200 bg-white hover:border-green-300"
+                            }`}
                         >
                           <span className="text-xl">{emoji}</span>
                           <span className="text-xs font-semibold text-gray-700 sm:text-sm">

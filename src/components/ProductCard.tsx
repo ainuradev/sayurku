@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Product } from "@/types";
 import { useCart } from "@/context/CartContext";
 
@@ -22,13 +23,13 @@ export default function ProductCard({ product }: ProductCardProps) {
     setKgCount(1);
     setShowModal(true);
   };
-  
+
   const handleCloseModal = () => setShowModal(false);
 
   const handleAdd = (unit: string) => {
     addToCart(product, unit);
     setShowModal(false);
-    
+
     setToastMessage(`${product.name} (${unit}) masuk keranjang!`);
     setShowToast(true);
     setTimeout(() => {
@@ -39,11 +40,21 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <>
       <div className="animate-fadeInUp group relative flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-        {/* Emoji Area */}
-        <div className="relative flex h-32 w-full items-center justify-center bg-gradient-to-b from-green-50 to-green-100/60 sm:h-36">
-          <span className="text-5xl transition-transform duration-300 group-hover:scale-110 sm:text-6xl">
-            {product.emoji}
-          </span>
+        {/* Image / Emoji Area */}
+        <div className="relative flex h-32 w-full items-center justify-center overflow-hidden bg-gradient-to-b from-green-50 to-green-100/60 sm:h-36">
+          {product.image_url ? (
+            <Image
+              src={product.image_url}
+              alt={product.name}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            />
+          ) : (
+            <span className="text-5xl transition-transform duration-300 group-hover:scale-110 sm:text-6xl">
+              {product.emoji}
+            </span>
+          )}
 
           {!product.is_available && (
             <>
@@ -106,9 +117,15 @@ export default function ProductCard({ product }: ProductCardProps) {
                 ✕
               </button>
             </div>
-            
+
             <div className="mb-5 flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3">
-              <span className="text-3xl">{product.emoji}</span>
+              {product.image_url ? (
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl">
+                  <Image src={product.image_url} alt={product.name} fill className="object-cover" />
+                </div>
+              ) : (
+                <span className="text-3xl">{product.emoji}</span>
+              )}
               <div>
                 <p className="font-semibold text-gray-800">{product.name}</p>
                 <p className="text-xs text-gray-500">{product.category}</p>
@@ -117,57 +134,57 @@ export default function ProductCard({ product }: ProductCardProps) {
 
             <div className="space-y-3">
               {product.unit_type === "unit" && product.unit_options?.length > 0 ? (
-                 <div className="grid grid-cols-2 gap-2">
-                   {product.unit_options.map((opt) => (
-                     <button
-                       key={opt}
-                       onClick={() => handleAdd(opt)}
-                       className="rounded-xl border-2 border-green-100 bg-white py-3 text-sm font-semibold text-green-700 transition hover:border-green-500 hover:bg-green-50 active:scale-95"
-                     >
-                       {opt}
-                     </button>
-                   ))}
-                 </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {product.unit_options.map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => handleAdd(opt)}
+                      className="rounded-xl border-2 border-green-100 bg-white py-3 text-sm font-semibold text-green-700 transition hover:border-green-500 hover:bg-green-50 active:scale-95"
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
               ) : (
-                 <>
-                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pilih Gram (gr)</p>
-                   <div className="grid grid-cols-3 gap-2">
-                     {["250gr", "500gr", "750gr"].map((opt) => (
-                       <button
-                         key={opt}
-                         onClick={() => handleAdd(opt)}
-                         className="rounded-xl border-2 border-green-100 bg-white py-2.5 text-sm font-semibold text-green-700 transition hover:border-green-500 hover:bg-green-50 active:scale-95"
-                       >
-                         {opt}
-                       </button>
-                     ))}
-                   </div>
-                   
-                   <p className="mt-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Atau Kilogram (kg)</p>
-                   <div className="flex items-center gap-3">
-                     <div className="flex h-11 flex-1 items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-2">
-                       <button 
-                         onClick={() => setKgCount(prev => Math.max(1, prev - 1))}
-                         className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-lg font-bold text-gray-600 shadow-sm transition hover:bg-gray-100 active:scale-95"
-                       >
-                         −
-                       </button>
-                       <span className="text-sm font-bold text-gray-800">{kgCount} kg</span>
-                       <button 
-                         onClick={() => setKgCount(prev => prev + 1)}
-                         className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-lg font-bold text-gray-600 shadow-sm transition hover:bg-gray-100 active:scale-95"
-                       >
-                         +
-                       </button>
-                     </div>
-                     <button
-                       onClick={() => handleAdd(`${kgCount} kg`)}
-                       className="h-11 rounded-xl bg-green-700 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-green-800 active:scale-95"
-                     >
-                       Tambah
-                     </button>
-                   </div>
-                 </>
+                <>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pilih Gram (gr)</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {["250gr", "500gr", "750gr"].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => handleAdd(opt)}
+                        className="rounded-xl border-2 border-green-100 bg-white py-2.5 text-sm font-semibold text-green-700 transition hover:border-green-500 hover:bg-green-50 active:scale-95"
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+
+                  <p className="mt-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Atau Kilogram (kg)</p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 flex-1 items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-2">
+                      <button
+                        onClick={() => setKgCount((prev) => Math.max(1, prev - 1))}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-lg font-bold text-gray-600 shadow-sm transition hover:bg-gray-100 active:scale-95"
+                      >
+                        −
+                      </button>
+                      <span className="text-sm font-bold text-gray-800">{kgCount} kg</span>
+                      <button
+                        onClick={() => setKgCount((prev) => prev + 1)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-lg font-bold text-gray-600 shadow-sm transition hover:bg-gray-100 active:scale-95"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => handleAdd(`${kgCount} kg`)}
+                      className="h-11 rounded-xl bg-green-700 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-green-800 active:scale-95"
+                    >
+                      Tambah
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </div>
