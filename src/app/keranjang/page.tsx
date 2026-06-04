@@ -45,7 +45,7 @@ export default function CartPage() {
       })
       .join("\n");
 
-    let text = `Halo Sayurku! 👋\n\nSaya mau cek harga & pesan:\n\n${listBelanja}\n\n`;
+    let text = `Halo HR Sayur! 👋\n\nSaya mau cek harga & pesan:\n\n${listBelanja}\n\n`;
     text += `📋 *Detail Pesanan:*\n`;
     text += `Nama: ${formData.nama}\n`;
     text += `Metode: ${formData.metode}\n`;

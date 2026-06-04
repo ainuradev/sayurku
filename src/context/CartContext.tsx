@@ -21,7 +21,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Load from localStorage on mount
   useEffect(() => {
     setIsMounted(true);
-    const savedCart = localStorage.getItem("sayurku_cart");
+    const savedCart = localStorage.getItem("hr_sayur_cart");
     if (savedCart) {
       try {
         setCartItems(JSON.parse(savedCart));
@@ -34,7 +34,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Save to localStorage on cart change
   useEffect(() => {
     if (isMounted) {
-      localStorage.setItem("sayurku_cart", JSON.stringify(cartItems));
+      localStorage.setItem("hr_sayur_cart", JSON.stringify(cartItems));
     }
   }, [cartItems, isMounted]);
 
