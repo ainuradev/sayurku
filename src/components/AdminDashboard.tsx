@@ -405,8 +405,8 @@ export default function AdminDashboard({ products }: { products: Product[] }) {
         )}
 
         {/* Tabel Produk */}
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-          <table className="w-full text-left text-sm text-gray-600">
+        <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <table className="w-full min-w-[600px] text-left text-sm text-gray-600">
             <thead className="bg-gray-50 text-xs uppercase text-gray-700 border-b border-gray-200">
               <tr>
                 <th className="px-4 py-3">Produk</th>
