@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
@@ -19,6 +20,11 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className={`${plusJakartaSans.className} bg-[#F7FBF2] text-gray-900`}>
+        <Script
+          src="https://app.sandbox.midtrans.com/snap/snap.js"
+          data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ""}
+          strategy="beforeInteractive"
+        />
         <CartProvider>
           <Navbar />
           <main className="min-h-screen">

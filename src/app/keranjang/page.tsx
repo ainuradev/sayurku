@@ -14,11 +14,18 @@ const SHOP_LATITUDE = -6.4716; // Latitude Pasar Tohaga Cibinong (Contoh)
 const SHOP_LONGITUDE = 106.8505; // Longitude Pasar Tohaga Cibinong (Contoh)
 // =============================================================
 
+declare global {
+  interface Window {
+    snap: any;
+  }
+}
+
 export default function CartPage() {
   const { cartItems, totalItems, updateQuantity, removeFromCart, clearCart } = useCart();
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [formData, setFormData] = useState<CheckoutFormData>({
     nama: "",
     phone: "",
@@ -30,7 +37,7 @@ export default function CartPage() {
     catatan: "",
   });
 
-  const handlePesanViaWA = () => {
+  const handleCheckout = async () => {
     if (!formData.nama.trim()) {
       alert("Mohon isi Nama Kamu terlebih dahulu.");
       return;
@@ -56,6 +63,62 @@ export default function CartPage() {
       return;
     }
 
+    if (formData.pembayaran === "QRIS / E-Wallet") {
+      await processMidtransPayment();
+    } else {
+      handlePesanViaWA("Belum Dibayar (Tunai)");
+    }
+  };
+
+  const processMidtransPayment = async () => {
+    setIsCheckoutLoading(true);
+    try {
+      const subTotal = cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0);
+      const ongkir = formData.metode === "Diantar ke Rumah" ? Math.ceil(formData.jarak / 5) * 10000 : 0;
+      const totalPrice = subTotal + ongkir;
+
+      const order_id = `SAYURKU-${Date.now()}`;
+      
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id,
+          gross_amount: totalPrice,
+          customer_details: {
+            first_name: formData.nama,
+            phone: formData.phone,
+          }
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mendapatkan token Midtrans");
+
+      window.snap.pay(data.token, {
+        onSuccess: function () {
+          setIsCheckoutLoading(false);
+          handlePesanViaWA(`LUNAS via Midtrans (Order ID: ${order_id})`);
+        },
+        onPending: function () {
+          alert("Silakan selesaikan pembayaran Anda di halaman instruksi.");
+          setIsCheckoutLoading(false);
+        },
+        onError: function () {
+          alert("Pembayaran gagal!");
+          setIsCheckoutLoading(false);
+        },
+        onClose: function () {
+          setIsCheckoutLoading(false);
+        }
+      });
+    } catch (err: any) {
+      alert("Error: " + err.message);
+      setIsCheckoutLoading(false);
+    }
+  };
+
+  const handlePesanViaWA = (statusPembayaran: string) => {
     const subTotal = cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0);
     const ongkir = formData.metode === "Diantar ke Rumah" ? Math.ceil(formData.jarak / 5) * 10000 : 0;
     const totalPrice = subTotal + ongkir;
@@ -80,15 +143,16 @@ export default function CartPage() {
       text += `Estimasi Jarak: ${formData.jarak} km\n`;
     }
     text += `Pembayaran: ${formData.pembayaran}\n`;
+    text += `Status Pembayaran: ${statusPembayaran}\n`;
     if (formData.catatan.trim()) text += `Catatan: ${formData.catatan}\n`;
     if (subTotal > 0) {
       text += `\n*Subtotal: Rp ${subTotal.toLocaleString("id-ID")}*\n`;
       if (formData.metode === "Diantar ke Rumah") {
         text += `*Ongkir (${formData.jarak.toFixed(1)} km): Rp ${ongkir.toLocaleString("id-ID")}*\n`;
       }
-      text += `*Total Estimasi Sementara: Rp ${totalPrice.toLocaleString("id-ID")}*\n`;
+      text += `*Total Tagihan: Rp ${totalPrice.toLocaleString("id-ID")}*\n`;
     }
-    text += `\nMohon konfirmasi pesanan ya, terima kasih! 🙏`;
+    text += `\nTerima kasih! 🙏`;
 
     const encoded = encodeURIComponent(text);
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`, "_blank");
@@ -277,7 +341,7 @@ export default function CartPage() {
                 </div>
               )}
               <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-1">
-                <p className="text-base font-bold text-green-800">Total Estimasi</p>
+                <p className="text-base font-bold text-green-800">Total Tagihan</p>
                 <p className="text-xl font-bold text-green-700">
                   Rp {(
                     cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0) +
@@ -285,14 +349,6 @@ export default function CartPage() {
                   ).toLocaleString("id-ID")}
                 </p>
               </div>
-            </div>
-
-            {/* Info Box */}
-            <div className="mt-4 rounded-xl bg-amber-50 p-3 ring-1 ring-amber-200/60">
-              <p className="flex items-start gap-2 text-xs leading-relaxed text-amber-800 sm:text-sm">
-                <span className="mt-0.5 shrink-0">💡</span>
-                <span>Harga akan dikonfirmasi oleh penjual setelah belanja di pasar pukul 04.00 WIB.</span>
-              </p>
             </div>
           </div>
 
@@ -472,14 +528,16 @@ export default function CartPage() {
           {/* ===== CTA BUTTON ===== */}
           <div className="pb-6 pt-2 text-center">
             <button
-              onClick={handlePesanViaWA}
-              className="w-full rounded-2xl bg-green-800 py-4 text-base font-bold text-white shadow-lg shadow-green-900/25 transition-all hover:bg-green-900 active:scale-[0.98] sm:text-lg"
+              onClick={handleCheckout}
+              disabled={isCheckoutLoading}
+              className="w-full rounded-2xl bg-green-800 py-4 text-base font-bold text-white shadow-lg shadow-green-900/25 transition-all hover:bg-green-900 active:scale-[0.98] sm:text-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Pesan via WhatsApp 📲
+              {isCheckoutLoading 
+                ? "Memproses..." 
+                : formData.pembayaran === "QRIS / E-Wallet" 
+                  ? "Bayar dengan Midtrans 💳" 
+                  : "Pesan via WhatsApp 📲"}
             </button>
-            <p className="mt-3 text-xs text-gray-400">
-              Setelah pesan, tunggu konfirmasi harga dari kami ya!
-            </p>
           </div>
         </div>
       )}
