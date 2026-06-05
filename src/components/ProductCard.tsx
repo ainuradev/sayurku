@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Product } from "@/types";
 import { useCart } from "@/context/CartContext";
+import { calculatePrice } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
@@ -87,6 +88,9 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           <p className="mb-3 text-sm font-bold text-gray-900">
             Rp {(product.price || 0).toLocaleString("id-ID")}
+            <span className="text-[10px] font-normal text-gray-500 ml-1">
+              / {product.unit_type === "weight" ? "kg" : "base"}
+            </span>
           </p>
 
           {!product.is_available ? (
@@ -135,29 +139,41 @@ export default function ProductCard({ product }: ProductCardProps) {
             <div className="space-y-3">
               {product.unit_type === "unit" && product.unit_options?.length > 0 ? (
                 <div className="grid grid-cols-2 gap-2">
-                  {product.unit_options.map((opt) => (
-                    <button
-                      key={opt}
-                      onClick={() => handleAdd(opt)}
-                      className="rounded-xl border-2 border-green-100 bg-white py-3 text-sm font-semibold text-green-700 transition hover:border-green-500 hover:bg-green-50 active:scale-95"
-                    >
-                      {opt}
-                    </button>
-                  ))}
+                  {product.unit_options.map((opt) => {
+                    const optPrice = calculatePrice(product.price, opt, product.unit_type);
+                    return (
+                      <button
+                        key={opt}
+                        onClick={() => handleAdd(opt)}
+                        className="rounded-xl border-2 border-green-100 bg-white py-3 flex flex-col items-center justify-center transition hover:border-green-500 hover:bg-green-50 active:scale-95"
+                      >
+                        <span className="text-sm font-semibold text-green-700">{opt}</span>
+                        {optPrice > 0 && (
+                          <span className="text-[10px] font-bold text-gray-500 mt-0.5">Rp {optPrice.toLocaleString("id-ID")}</span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               ) : (
                 <>
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pilih Gram (gr)</p>
                   <div className="grid grid-cols-3 gap-2">
-                    {["250gr", "500gr", "750gr"].map((opt) => (
-                      <button
-                        key={opt}
-                        onClick={() => handleAdd(opt)}
-                        className="rounded-xl border-2 border-green-100 bg-white py-2.5 text-sm font-semibold text-green-700 transition hover:border-green-500 hover:bg-green-50 active:scale-95"
-                      >
-                        {opt}
-                      </button>
-                    ))}
+                    {["250gr", "500gr", "750gr"].map((opt) => {
+                      const optPrice = calculatePrice(product.price, opt, product.unit_type);
+                      return (
+                        <button
+                          key={opt}
+                          onClick={() => handleAdd(opt)}
+                          className="rounded-xl border-2 border-green-100 bg-white py-2 flex flex-col items-center justify-center transition hover:border-green-500 hover:bg-green-50 active:scale-95"
+                        >
+                          <span className="text-sm font-semibold text-green-700">{opt}</span>
+                          {optPrice > 0 && (
+                            <span className="text-[10px] font-bold text-gray-500 mt-0.5">Rp {optPrice.toLocaleString("id-ID")}</span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   <p className="mt-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Atau Kilogram (kg)</p>
@@ -179,9 +195,12 @@ export default function ProductCard({ product }: ProductCardProps) {
                     </div>
                     <button
                       onClick={() => handleAdd(`${kgCount} kg`)}
-                      className="h-11 rounded-xl bg-green-700 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-green-800 active:scale-95"
+                      className="h-11 rounded-xl bg-green-700 px-5 flex flex-col items-center justify-center text-white shadow-sm transition hover:bg-green-800 active:scale-95"
                     >
-                      Tambah
+                      <span className="text-sm font-bold">Tambah</span>
+                      {product.price ? (
+                        <span className="text-[9px] opacity-80">Rp {(calculatePrice(product.price, `${kgCount} kg`, product.unit_type)).toLocaleString("id-ID")}</span>
+                      ) : null}
                     </button>
                   </div>
                 </>

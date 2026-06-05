@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { CheckoutFormData, DeliveryMethod, PaymentMethod } from "@/types";
 import EmptyCart from "@/components/EmptyCart";
+import { calculatePrice } from "@/lib/utils";
 
 const WHATSAPP_NUMBER = "6281387842053";
 
@@ -39,13 +40,14 @@ export default function CartPage() {
       return;
     }
 
-    const totalPrice = cartItems.reduce((sum, item) => sum + ((item.price || 0) * item.quantity), 0);
+    const totalPrice = cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0);
 
     let listBelanja = cartItems
       .map((item) => {
         // Jika quantity > 1, tambahkan tulisan "2 x " di depannya. Jika tidak, kosongkan saja.
         const qtyString = item.quantity > 1 ? `${item.quantity} x ` : "";
-        const itemPriceStr = item.price ? ` - Rp ${(item.price * item.quantity).toLocaleString("id-ID")}` : "";
+        const itemPrice = calculatePrice(item.price, item.selectedUnit, item.unit_type);
+        const itemPriceStr = itemPrice > 0 ? ` - Rp ${(itemPrice * item.quantity).toLocaleString("id-ID")}` : "";
         return `- ${item.emoji} ${item.name} (${qtyString}${item.selectedUnit})${itemPriceStr}`;
       })
       .join("\n");
@@ -153,7 +155,7 @@ export default function CartPage() {
                       </div>
                       {item.price ? (
                         <p className="text-xs font-bold text-gray-900 mt-1">
-                          Rp {(item.price * item.quantity).toLocaleString("id-ID")}
+                          Rp {(calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity).toLocaleString("id-ID")}
                         </p>
                       ) : null}
                     </div>
@@ -205,7 +207,7 @@ export default function CartPage() {
               <div className="flex items-center justify-between pt-2 border-t border-dashed border-gray-100">
                 <p className="text-base font-bold text-gray-800">Total Estimasi</p>
                 <p className="text-lg font-bold text-green-700">
-                  Rp {cartItems.reduce((sum, item) => sum + ((item.price || 0) * item.quantity), 0).toLocaleString("id-ID")}
+                  Rp {cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0).toLocaleString("id-ID")}
                 </p>
               </div>
             </div>
