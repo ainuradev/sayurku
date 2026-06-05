@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { CheckoutFormData, DeliveryMethod, PaymentMethod } from "@/types";
 import EmptyCart from "@/components/EmptyCart";
@@ -21,6 +22,15 @@ declare global {
 }
 
 export default function CartPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+      <CartPageContent />
+    </Suspense>
+  );
+}
+
+function CartPageContent() {
+  const searchParams = useSearchParams();
   const { cartItems, totalItems, updateQuantity, removeFromCart, clearCart } = useCart();
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
@@ -36,6 +46,84 @@ export default function CartPage() {
     pembayaran: "",
     catatan: "",
   });
+
+  // Pulihkan data dari localStorage saat di-redirect balik dari E-Wallet Midtrans
+  useEffect(() => {
+    const savedData = localStorage.getItem("sayurku_checkout_form");
+    if (savedData) {
+      try {
+        setFormData(JSON.parse(savedData));
+      } catch (e) {
+        console.error("Gagal membaca data form yang tersimpan", e);
+      }
+    }
+
+    // Cek parameter Midtrans di URL
+    const transactionStatus = searchParams.get("transaction_status");
+    const orderId = searchParams.get("order_id");
+
+    if (transactionStatus && orderId) {
+      if (transactionStatus === "settlement" || transactionStatus === "capture") {
+        // Hapus param dari URL (opsional, tapi karena di Next.js butuh router.replace, kita biarkan saja)
+        const savedFormStr = localStorage.getItem("sayurku_checkout_form");
+        let parsedForm = formData;
+        if (savedFormStr) {
+          parsedForm = JSON.parse(savedFormStr);
+          setFormData(parsedForm);
+        }
+        
+        // Panggil fungsi sukses
+        handleSuccessRedirectWA(`LUNAS via Midtrans (Order ID: ${orderId})`, parsedForm);
+      } else if (transactionStatus === "pending") {
+        alert("Pembayaran belum diselesaikan (Pending).");
+      }
+      
+      // Bersihkan session
+      localStorage.removeItem("sayurku_checkout_form");
+    }
+  }, [searchParams]);
+
+  const handleSuccessRedirectWA = (statusPembayaran: string, finalForm: CheckoutFormData) => {
+    const subTotal = cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0);
+    const ongkir = finalForm.metode === "Diantar ke Rumah" ? Math.ceil(finalForm.jarak / 5) * 10000 : 0;
+    const totalPrice = subTotal + ongkir;
+
+    let listBelanja = cartItems
+      .map((item) => {
+        const qtyString = item.quantity > 1 ? `${item.quantity} x ` : "";
+        const itemPrice = calculatePrice(item.price, item.selectedUnit, item.unit_type);
+        const itemPriceStr = itemPrice > 0 ? ` - Rp ${(itemPrice * item.quantity).toLocaleString("id-ID")}` : "";
+        return `- ${item.emoji} ${item.name} (${qtyString}${item.selectedUnit})${itemPriceStr}`;
+      })
+      .join("\n");
+
+    let text = `Halo Sayurku! 👋\n\nSaya mau pesan:\n\n${listBelanja}\n\n`;
+    text += `📋 *Detail Pesanan:*\n`;
+    text += `Nama: ${finalForm.nama}\n`;
+    text += `No. Telepon: ${finalForm.phone}\n`;
+    text += `Metode: ${finalForm.metode}\n`;
+    if (finalForm.metode === "Diantar ke Rumah") {
+      text += `Alamat: ${finalForm.alamat}\n`;
+      text += `Estimasi Jarak: ${finalForm.jarak} km\n`;
+    }
+    text += `Pembayaran: ${finalForm.pembayaran}\n`;
+    text += `Status Pembayaran: ${statusPembayaran}\n`;
+    if (finalForm.catatan.trim()) text += `Catatan: ${finalForm.catatan}\n`;
+    if (subTotal > 0) {
+      text += `\n*Subtotal: Rp ${subTotal.toLocaleString("id-ID")}*\n`;
+      if (finalForm.metode === "Diantar ke Rumah") {
+        text += `*Ongkir (${finalForm.jarak.toFixed(1)} km): Rp ${ongkir.toLocaleString("id-ID")}*\n`;
+      }
+      text += `*Total Tagihan: Rp ${totalPrice.toLocaleString("id-ID")}*\n`;
+    }
+    text += `\nTerima kasih! 🙏`;
+
+    const encoded = encodeURIComponent(text);
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`, "_blank");
+
+    clearCart();
+    setIsOrderSuccess(true);
+  };
 
   const handleCheckout = async () => {
     if (!formData.nama.trim()) {
@@ -64,9 +152,11 @@ export default function CartPage() {
     }
 
     if (formData.pembayaran === "QRIS / E-Wallet") {
+      // Simpan data ke localstorage buat jaga-jaga kalau Midtrans me-redirect halaman (e.g. DANA/ShopeePay)
+      localStorage.setItem("sayurku_checkout_form", JSON.stringify(formData));
       await processMidtransPayment();
     } else {
-      handlePesanViaWA("Belum Dibayar (Tunai)");
+      handleSuccessRedirectWA("Belum Dibayar (Tunai)", formData);
     }
   };
 
@@ -98,70 +188,29 @@ export default function CartPage() {
       window.snap.pay(data.token, {
         onSuccess: function () {
           setIsCheckoutLoading(false);
-          handlePesanViaWA(`LUNAS via Midtrans (Order ID: ${order_id})`);
+          localStorage.removeItem("sayurku_checkout_form");
+          handleSuccessRedirectWA(`LUNAS via Midtrans (Order ID: ${order_id})`, formData);
         },
         onPending: function () {
           alert("Silakan selesaikan pembayaran Anda di halaman instruksi.");
           setIsCheckoutLoading(false);
+          localStorage.removeItem("sayurku_checkout_form");
         },
         onError: function () {
           alert("Pembayaran gagal!");
           setIsCheckoutLoading(false);
+          localStorage.removeItem("sayurku_checkout_form");
         },
         onClose: function () {
           setIsCheckoutLoading(false);
+          // Kita biarkan localstorage kalau mereka cuma close modal tanpa batal transaksi, 
+          // supaya pas checkout lagi datanya masih ada
         }
       });
     } catch (err: any) {
       alert("Error: " + err.message);
       setIsCheckoutLoading(false);
     }
-  };
-
-  const handlePesanViaWA = (statusPembayaran: string) => {
-    const subTotal = cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0);
-    const ongkir = formData.metode === "Diantar ke Rumah" ? Math.ceil(formData.jarak / 5) * 10000 : 0;
-    const totalPrice = subTotal + ongkir;
-
-    let listBelanja = cartItems
-      .map((item) => {
-        // Jika quantity > 1, tambahkan tulisan "2 x " di depannya. Jika tidak, kosongkan saja.
-        const qtyString = item.quantity > 1 ? `${item.quantity} x ` : "";
-        const itemPrice = calculatePrice(item.price, item.selectedUnit, item.unit_type);
-        const itemPriceStr = itemPrice > 0 ? ` - Rp ${(itemPrice * item.quantity).toLocaleString("id-ID")}` : "";
-        return `- ${item.emoji} ${item.name} (${qtyString}${item.selectedUnit})${itemPriceStr}`;
-      })
-      .join("\n");
-
-    let text = `Halo Sayurku! 👋\n\nSaya mau pesan:\n\n${listBelanja}\n\n`;
-    text += `📋 *Detail Pesanan:*\n`;
-    text += `Nama: ${formData.nama}\n`;
-    text += `No. Telepon: ${formData.phone}\n`;
-    text += `Metode: ${formData.metode}\n`;
-    if (formData.metode === "Diantar ke Rumah") {
-      text += `Alamat: ${formData.alamat}\n`;
-      text += `Estimasi Jarak: ${formData.jarak} km\n`;
-    }
-    text += `Pembayaran: ${formData.pembayaran}\n`;
-    text += `Status Pembayaran: ${statusPembayaran}\n`;
-    if (formData.catatan.trim()) text += `Catatan: ${formData.catatan}\n`;
-    if (subTotal > 0) {
-      text += `\n*Subtotal: Rp ${subTotal.toLocaleString("id-ID")}*\n`;
-      if (formData.metode === "Diantar ke Rumah") {
-        text += `*Ongkir (${formData.jarak.toFixed(1)} km): Rp ${ongkir.toLocaleString("id-ID")}*\n`;
-      }
-      text += `*Total Tagihan: Rp ${totalPrice.toLocaleString("id-ID")}*\n`;
-    }
-    text += `\nTerima kasih! 🙏`;
-
-    const encoded = encodeURIComponent(text);
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`, "_blank");
-
-    // Hapus isi keranjang setelah kirim ke WA
-    clearCart();
-
-    // Tampilkan pesan sukses
-    setIsOrderSuccess(true);
   };
 
   const handleMetodeChange = (metode: DeliveryMethod) => {
