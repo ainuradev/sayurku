@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "HR Sayur – Sayur Segar Antar Rumah",
+  title: "Sayurku – Sayur Segar Antar Rumah",
   description: "Pesan sayuran segar pilihan dari lapak lokal terpercaya. Antar rumah atau ambil sendiri, bayar tunai atau QRIS.",
 };
 

@@ -85,8 +85,8 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           <div className="mt-auto" />
 
-          <p className="mb-3 text-[10px] italic text-gray-400">
-            *Harga via WhatsApp
+          <p className="mb-3 text-sm font-bold text-gray-900">
+            Rp {(product.price || 0).toLocaleString("id-ID")}
           </p>
 
           {!product.is_available ? (

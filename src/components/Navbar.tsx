@@ -14,7 +14,7 @@ export default function Navbar() {
           <span className="text-2xl">🥬</span>
           <div>
             <h1 className="text-lg font-bold tracking-tight text-white sm:text-xl">
-              HR Sayur
+              Sayurku
             </h1>
             <p className="hidden text-[10px] font-medium uppercase tracking-widest text-green-300/70 sm:block">
               Segar dari Pasar

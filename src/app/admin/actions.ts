@@ -26,6 +26,7 @@ export async function addProduct(formData: FormData) {
   const unit_type = formData.get("unit_type") as "weight" | "unit";
   const unit_options_raw = formData.get("unit_options") as string;
   const sort_order = parseInt((formData.get("sort_order") as string) || "0");
+  const price = parseInt((formData.get("price") as string) || "0");
   const image_url = (formData.get("image_url") as string) || null;
 
   let unit_options: string[] = [];
@@ -40,6 +41,7 @@ export async function addProduct(formData: FormData) {
       category,
       emoji,
       image_url,
+      price,
       unit_type,
       unit_options,
       sort_order,
@@ -86,6 +88,7 @@ export async function updateProduct(id: string, formData: FormData) {
   const unit_type = formData.get("unit_type") as "weight" | "unit";
   const unit_options_raw = formData.get("unit_options") as string;
   const sort_order = parseInt((formData.get("sort_order") as string) || "0");
+  const price = parseInt((formData.get("price") as string) || "0");
   const image_url = formData.get("image_url") as string | null;
 
   let unit_options: string[] = [];
@@ -98,6 +101,7 @@ export async function updateProduct(id: string, formData: FormData) {
     name,
     category,
     emoji,
+    price,
     unit_type,
     unit_options,
     sort_order,

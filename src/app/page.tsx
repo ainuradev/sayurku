@@ -122,7 +122,7 @@ export default function Home() {
       <footer className="mt-auto border-t border-gray-200 bg-white px-4 py-8 text-center">
         <div className="mx-auto max-w-6xl">
           <p className="text-sm font-semibold text-gray-500">
-            © HR Sayur 2025 — Lapak Sayur Segar Lokal
+            © Sayurku 2025 — Lapak Sayur Segar Lokal
           </p>
           <p className="mt-1.5 text-xs text-gray-400">
             Harga bersifat dinamis & dikonfirmasi setelah belanja pasar pukul 04.00 WIB

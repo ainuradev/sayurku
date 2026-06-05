@@ -13,6 +13,7 @@ export default function CartPage() {
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
   const [formData, setFormData] = useState<CheckoutFormData>({
     nama: "",
+    phone: "",
     metode: "",
     alamat: "",
     jamAntar: "",
@@ -25,6 +26,10 @@ export default function CartPage() {
       alert("Mohon isi Nama Kamu terlebih dahulu.");
       return;
     }
+    if (!formData.phone.trim()) {
+      alert("Mohon isi Nomor Telepon Kamu terlebih dahulu.");
+      return;
+    }
     if (!formData.metode) {
       alert("Mohon pilih Metode Pengambilan.");
       return;
@@ -34,21 +39,28 @@ export default function CartPage() {
       return;
     }
 
+    const totalPrice = cartItems.reduce((sum, item) => sum + ((item.price || 0) * item.quantity), 0);
+
     let listBelanja = cartItems
       .map((item) => {
         // Jika quantity > 1, tambahkan tulisan "2 x " di depannya. Jika tidak, kosongkan saja.
         const qtyString = item.quantity > 1 ? `${item.quantity} x ` : "";
-        return `- ${item.emoji} ${item.name} (${qtyString}${item.selectedUnit})`;
+        const itemPriceStr = item.price ? ` - Rp ${(item.price * item.quantity).toLocaleString("id-ID")}` : "";
+        return `- ${item.emoji} ${item.name} (${qtyString}${item.selectedUnit})${itemPriceStr}`;
       })
       .join("\n");
 
-    let text = `Halo HR Sayur! 👋\n\nSaya mau cek harga & pesan:\n\n${listBelanja}\n\n`;
+    let text = `Halo Sayurku! 👋\n\nSaya mau pesan:\n\n${listBelanja}\n\n`;
     text += `📋 *Detail Pesanan:*\n`;
     text += `Nama: ${formData.nama}\n`;
+    text += `No. Telepon: ${formData.phone}\n`;
     text += `Metode: ${formData.metode}\n`;
     text += `Pembayaran: ${formData.pembayaran}\n`;
     if (formData.catatan.trim()) text += `Catatan: ${formData.catatan}\n`;
-    text += `\nMohon konfirmasi harga ya, terima kasih! 🙏`;
+    if (totalPrice > 0) {
+      text += `\n*Total Estimasi Sementara: Rp ${totalPrice.toLocaleString("id-ID")}*\n`;
+    }
+    text += `\nMohon konfirmasi pesanan ya, terima kasih! 🙏`;
 
     const encoded = encodeURIComponent(text);
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`, "_blank");
@@ -131,12 +143,19 @@ export default function CartPage() {
                     <h3 className="truncate text-sm font-semibold text-gray-800">
                       {item.name}
                     </h3>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[11px] font-medium text-gray-500">{item.category}</span>
-                      <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                      <span className="text-[11px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded-md">
-                        {item.selectedUnit}
-                      </span>
+                    <div className="flex flex-col mt-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-medium text-gray-500">{item.category}</span>
+                        <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                        <span className="text-[11px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded-md">
+                          {item.selectedUnit}
+                        </span>
+                      </div>
+                      {item.price ? (
+                        <p className="text-xs font-bold text-gray-900 mt-1">
+                          Rp {(item.price * item.quantity).toLocaleString("id-ID")}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
 
@@ -174,13 +193,21 @@ export default function CartPage() {
             </div>
 
             {/* Divider + Summary */}
-            <div className="mt-4 border-t border-gray-100 pt-3 flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">
-                <span className="font-bold text-gray-800">{cartItems.length}</span> jenis produk
-              </p>
-              <p className="text-sm font-semibold text-green-700 bg-green-50 px-3 py-1 rounded-full">
-                Total <span className="font-bold">{totalItems}</span> item
-              </p>
+            <div className="mt-4 border-t border-gray-100 pt-4 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-500">
+                  <span className="font-bold text-gray-800">{cartItems.length}</span> jenis produk
+                </p>
+                <p className="text-sm font-semibold text-green-700 bg-green-50 px-3 py-1 rounded-full">
+                  Total <span className="font-bold">{totalItems}</span> item
+                </p>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-dashed border-gray-100">
+                <p className="text-base font-bold text-gray-800">Total Estimasi</p>
+                <p className="text-lg font-bold text-green-700">
+                  Rp {cartItems.reduce((sum, item) => sum + ((item.price || 0) * item.quantity), 0).toLocaleString("id-ID")}
+                </p>
+              </div>
             </div>
 
             {/* Info Box */}
@@ -199,18 +226,32 @@ export default function CartPage() {
             </h2>
 
             <div className="space-y-5">
-              {/* Name */}
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-                  Nama Kamu <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Ibu Sari"
-                  value={formData.nama}
-                  onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-800 outline-none transition-all focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-500/20"
-                />
+              {/* Name and Phone Grid */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                    Nama Kamu <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: Ibu Sari"
+                    value={formData.nama}
+                    onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-800 outline-none transition-all focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                    No. Telepon / WhatsApp <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="Contoh: 08123456789"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-800 outline-none transition-all focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-500/20"
+                  />
+                </div>
               </div>
 
               {/* Delivery Method */}

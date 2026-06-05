@@ -4,6 +4,7 @@ export interface Product {
   category: string;
   emoji: string;
   image_url?: string | null;
+  price?: number;
   unit_type: "weight" | "unit";
   unit_options: string[];
   is_available: boolean;
@@ -22,6 +23,7 @@ export type PaymentMethod = "Tunai (Cash)" | "QRIS / E-Wallet";
 
 export interface CheckoutFormData {
   nama: string;
+  phone: string;
   metode: DeliveryMethod | "";
   alamat: string;
   jamAntar: string;

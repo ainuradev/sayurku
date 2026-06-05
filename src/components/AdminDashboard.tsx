@@ -159,6 +159,16 @@ function EditModal({ product, onClose }: EditModalProps) {
               />
             </div>
             <div>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">Harga (Rp)</label>
+              <input
+                name="price"
+                type="number"
+                required
+                defaultValue={product.price || 0}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-green-500"
+              />
+            </div>
+            <div>
               <label className="mb-1 block text-sm font-semibold text-gray-700">Urutan Tampil</label>
               <input
                 name="sort_order"
@@ -360,6 +370,10 @@ export default function AdminDashboard({ products }: { products: Product[] }) {
                 <input name="emoji" required placeholder="Cth: 🌶️" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-green-500" />
               </div>
               <div>
+                <label className="mb-1 block text-sm font-semibold text-gray-700">Harga (Rp)</label>
+                <input name="price" type="number" required defaultValue="0" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-green-500" />
+              </div>
+              <div>
                 <label className="mb-1 block text-sm font-semibold text-gray-700">Urutan Tampil (Angka)</label>
                 <input name="sort_order" type="number" defaultValue="99" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-green-500" />
               </div>
@@ -431,7 +445,9 @@ export default function AdminDashboard({ products }: { products: Product[] }) {
                       )}
                       <div>
                         <p className="font-bold text-gray-900">{p.name}</p>
-                        <p className="text-[11px] text-gray-500">{p.category}</p>
+                        <p className="text-[11px] text-gray-500">
+                          {p.category} • <span className="font-semibold text-green-600">Rp {(p.price || 0).toLocaleString("id-ID")}</span>
+                        </p>
                         {!p.image_url && (
                           <span className="text-[10px] font-semibold text-amber-500">⚠️ Belum ada foto</span>
                         )}
