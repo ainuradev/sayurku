@@ -5,19 +5,26 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { CheckoutFormData, DeliveryMethod, PaymentMethod } from "@/types";
 import EmptyCart from "@/components/EmptyCart";
-import { calculatePrice } from "@/lib/utils";
+import { calculatePrice, calculateDistance } from "@/lib/utils";
 
 const WHATSAPP_NUMBER = "6281387842053";
+
+// === KOORDINAT LAPAK (Silakan ubah dengan koordinat asli) ===
+const SHOP_LATITUDE = -6.4716; // Latitude Pasar Tohaga Cibinong (Contoh)
+const SHOP_LONGITUDE = 106.8505; // Longitude Pasar Tohaga Cibinong (Contoh)
+// =============================================================
 
 export default function CartPage() {
   const { cartItems, totalItems, updateQuantity, removeFromCart, clearCart } = useCart();
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState("");
   const [formData, setFormData] = useState<CheckoutFormData>({
     nama: "",
     phone: "",
     metode: "",
     alamat: "",
-    jarak: 1,
+    jarak: 0,
     jamAntar: "",
     pembayaran: "",
     catatan: "",
@@ -37,7 +44,11 @@ export default function CartPage() {
       return;
     }
     if (formData.metode === "Diantar ke Rumah" && !formData.alamat.trim()) {
-      alert("Mohon isi Alamat Lengkap pengiriman.");
+      alert("Mohon isi Alamat Lengkap pengiriman sebagai patokan.");
+      return;
+    }
+    if (formData.metode === "Diantar ke Rumah" && formData.jarak === 0) {
+      alert("Mohon deteksi lokasi Anda terlebih dahulu untuk menghitung ongkos kirim.");
       return;
     }
     if (!formData.pembayaran) {
@@ -46,7 +57,7 @@ export default function CartPage() {
     }
 
     const subTotal = cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0);
-    const ongkir = formData.metode === "Diantar ke Rumah" ? Math.ceil((formData.jarak || 1) / 3) * 10000 : 0;
+    const ongkir = formData.metode === "Diantar ke Rumah" ? Math.ceil(formData.jarak / 5) * 10000 : 0;
     const totalPrice = subTotal + ongkir;
 
     let listBelanja = cartItems
@@ -73,7 +84,7 @@ export default function CartPage() {
     if (subTotal > 0) {
       text += `\n*Subtotal: Rp ${subTotal.toLocaleString("id-ID")}*\n`;
       if (formData.metode === "Diantar ke Rumah") {
-        text += `*Ongkir (${formData.jarak} km): Rp ${ongkir.toLocaleString("id-ID")}*\n`;
+        text += `*Ongkir (${formData.jarak.toFixed(1)} km): Rp ${ongkir.toLocaleString("id-ID")}*\n`;
       }
       text += `*Total Estimasi Sementara: Rp ${totalPrice.toLocaleString("id-ID")}*\n`;
     }
@@ -95,6 +106,38 @@ export default function CartPage() {
 
   const handlePembayaranChange = (pembayaran: PaymentMethod) => {
     setFormData((prev) => ({ ...prev, pembayaran }));
+  };
+
+  const handleGetLocation = () => {
+    setIsLocating(true);
+    setLocationError("");
+
+    if (!navigator.geolocation) {
+      setLocationError("Browser Anda tidak mendukung deteksi lokasi.");
+      setIsLocating(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const userLat = position.coords.latitude;
+        const userLon = position.coords.longitude;
+        const dist = calculateDistance(SHOP_LATITUDE, SHOP_LONGITUDE, userLat, userLon);
+        
+        // Simpan jarak (minimal 1 km agar tetap kena ongkir dasar)
+        setFormData(prev => ({ ...prev, jarak: Math.max(1, dist) }));
+        setIsLocating(false);
+      },
+      (error) => {
+        setIsLocating(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationError("Izin lokasi ditolak. Mohon izinkan akses lokasi di pengaturan browser Anda.");
+        } else {
+          setLocationError("Gagal mendapatkan lokasi. Coba lagi.");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
   // Tampilan jika pesanan sudah berhasil dibuat
@@ -225,11 +268,11 @@ export default function CartPage() {
                   Rp {cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0).toLocaleString("id-ID")}
                 </p>
               </div>
-              {formData.metode === "Diantar ke Rumah" && (
+              {formData.metode === "Diantar ke Rumah" && formData.jarak > 0 && (
                 <div className="flex items-center justify-between pt-1">
-                  <p className="text-sm font-medium text-gray-600">Ongkir ({formData.jarak || 1} km)</p>
+                  <p className="text-sm font-medium text-gray-600">Ongkir ({formData.jarak.toFixed(1)} km)</p>
                   <p className="text-base font-medium text-gray-600">
-                    Rp {(Math.ceil((formData.jarak || 1) / 3) * 10000).toLocaleString("id-ID")}
+                    Rp {(Math.ceil(formData.jarak / 5) * 10000).toLocaleString("id-ID")}
                   </p>
                 </div>
               )}
@@ -238,7 +281,7 @@ export default function CartPage() {
                 <p className="text-xl font-bold text-green-700">
                   Rp {(
                     cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0) +
-                    (formData.metode === "Diantar ke Rumah" ? Math.ceil((formData.jarak || 1) / 3) * 10000 : 0)
+                    (formData.metode === "Diantar ke Rumah" && formData.jarak > 0 ? Math.ceil(formData.jarak / 5) * 10000 : 0)
                   ).toLocaleString("id-ID")}
                 </p>
               </div>
@@ -349,20 +392,32 @@ export default function CartPage() {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-                      Estimasi Jarak dari Pasar Tohaga (km) <span className="text-red-400">*</span>
+                      Jarak Pengiriman <span className="text-red-400">*</span>
                     </label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="number"
-                        min="1"
-                        max="50"
-                        value={formData.jarak}
-                        onChange={(e) => setFormData({ ...formData, jarak: parseInt(e.target.value) || 1 })}
-                        className="w-20 rounded-xl border border-green-200 bg-white px-3 py-2.5 text-sm text-center text-gray-800 outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
-                      />
-                      <span className="text-xs font-medium text-green-800">
-                        Ongkir Rp 10.000 / 3 km
-                      </span>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={handleGetLocation}
+                        disabled={isLocating}
+                        className="flex w-fit items-center gap-2 rounded-xl bg-blue-100 px-4 py-2.5 text-sm font-bold text-blue-700 shadow-sm transition-all hover:bg-blue-200 active:scale-95 disabled:opacity-50"
+                      >
+                        {isLocating ? "⏳ Melacak lokasi..." : "📍 Deteksi Lokasi Otomatis"}
+                      </button>
+                      
+                      {locationError && (
+                        <p className="text-xs font-medium text-red-500">{locationError}</p>
+                      )}
+
+                      {formData.jarak > 0 && !locationError && (
+                        <div className="mt-1 flex items-center gap-3">
+                          <span className="rounded-lg border border-green-200 bg-white px-3 py-1.5 text-sm font-bold text-gray-800 shadow-sm">
+                            {formData.jarak.toFixed(1)} km
+                          </span>
+                          <span className="text-xs font-semibold text-green-800">
+                            (Ongkir Rp 10.000 / 5 km)
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
