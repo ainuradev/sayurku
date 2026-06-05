@@ -17,6 +17,7 @@ export default function CartPage() {
     phone: "",
     metode: "",
     alamat: "",
+    jarak: 1,
     jamAntar: "",
     pembayaran: "",
     catatan: "",
@@ -35,12 +36,18 @@ export default function CartPage() {
       alert("Mohon pilih Metode Pengambilan.");
       return;
     }
+    if (formData.metode === "Diantar ke Rumah" && !formData.alamat.trim()) {
+      alert("Mohon isi Alamat Lengkap pengiriman.");
+      return;
+    }
     if (!formData.pembayaran) {
       alert("Mohon pilih Metode Pembayaran.");
       return;
     }
 
-    const totalPrice = cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0);
+    const subTotal = cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0);
+    const ongkir = formData.metode === "Diantar ke Rumah" ? Math.ceil((formData.jarak || 1) / 3) * 10000 : 0;
+    const totalPrice = subTotal + ongkir;
 
     let listBelanja = cartItems
       .map((item) => {
@@ -57,10 +64,18 @@ export default function CartPage() {
     text += `Nama: ${formData.nama}\n`;
     text += `No. Telepon: ${formData.phone}\n`;
     text += `Metode: ${formData.metode}\n`;
+    if (formData.metode === "Diantar ke Rumah") {
+      text += `Alamat: ${formData.alamat}\n`;
+      text += `Estimasi Jarak: ${formData.jarak} km\n`;
+    }
     text += `Pembayaran: ${formData.pembayaran}\n`;
     if (formData.catatan.trim()) text += `Catatan: ${formData.catatan}\n`;
-    if (totalPrice > 0) {
-      text += `\n*Total Estimasi Sementara: Rp ${totalPrice.toLocaleString("id-ID")}*\n`;
+    if (subTotal > 0) {
+      text += `\n*Subtotal: Rp ${subTotal.toLocaleString("id-ID")}*\n`;
+      if (formData.metode === "Diantar ke Rumah") {
+        text += `*Ongkir (${formData.jarak} km): Rp ${ongkir.toLocaleString("id-ID")}*\n`;
+      }
+      text += `*Total Estimasi Sementara: Rp ${totalPrice.toLocaleString("id-ID")}*\n`;
     }
     text += `\nMohon konfirmasi pesanan ya, terima kasih! 🙏`;
 
@@ -205,9 +220,26 @@ export default function CartPage() {
                 </p>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-dashed border-gray-100">
-                <p className="text-base font-bold text-gray-800">Total Estimasi</p>
-                <p className="text-lg font-bold text-green-700">
+                <p className="text-base font-bold text-gray-800">Subtotal</p>
+                <p className="text-lg font-bold text-gray-800">
                   Rp {cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0).toLocaleString("id-ID")}
+                </p>
+              </div>
+              {formData.metode === "Diantar ke Rumah" && (
+                <div className="flex items-center justify-between pt-1">
+                  <p className="text-sm font-medium text-gray-600">Ongkir ({formData.jarak || 1} km)</p>
+                  <p className="text-base font-medium text-gray-600">
+                    Rp {(Math.ceil((formData.jarak || 1) / 3) * 10000).toLocaleString("id-ID")}
+                  </p>
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-1">
+                <p className="text-base font-bold text-green-800">Total Estimasi</p>
+                <p className="text-xl font-bold text-green-700">
+                  Rp {(
+                    cartItems.reduce((sum, item) => sum + (calculatePrice(item.price, item.selectedUnit, item.unit_type) * item.quantity), 0) +
+                    (formData.metode === "Diantar ke Rumah" ? Math.ceil((formData.jarak || 1) / 3) * 10000 : 0)
+                  ).toLocaleString("id-ID")}
                 </p>
               </div>
             </div>
@@ -262,16 +294,17 @@ export default function CartPage() {
                   Metode Pengambilan <span className="text-red-400">*</span>
                 </label>
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Diantar ke Rumah — Coming Soon */}
-                  <div className="relative">
-                    <div className="flex flex-col items-center gap-1 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-3 text-center opacity-60 cursor-not-allowed select-none sm:flex-row sm:gap-3 sm:p-4 sm:text-left">
-                      <span className="text-xl">🚗</span>
-                      <span className="text-xs font-semibold text-gray-400 sm:text-sm">Diantar ke Rumah</span>
-                    </div>
-                    <span className="absolute -top-2 -right-2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm whitespace-nowrap">
-                      🚧 Segera Hadir
-                    </span>
-                  </div>
+                  {/* Diantar ke Rumah */}
+                  <button
+                    onClick={() => handleMetodeChange("Diantar ke Rumah")}
+                    className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all sm:flex-row sm:gap-3 sm:p-4 sm:text-left ${formData.metode === "Diantar ke Rumah"
+                      ? "border-green-600 bg-green-50 shadow-sm"
+                      : "border-gray-200 bg-white hover:border-green-300"
+                      }`}
+                  >
+                    <span className="text-xl">🚗</span>
+                    <span className="text-xs font-semibold text-gray-700 sm:text-sm">Diantar ke Rumah</span>
+                  </button>
 
                   {/* Ambil Sendiri */}
                   <button
@@ -296,6 +329,42 @@ export default function CartPage() {
                   <p className="mt-1 text-sm text-green-800">
                     ⏰ Buka mulai pukul 02.00 - 15.00 WIB
                   </p>
+                </div>
+              )}
+
+              {/* Conditional: Delivery info */}
+              {formData.metode === "Diantar ke Rumah" && (
+                <div className="animate-slideDown space-y-4 rounded-xl border border-green-200 bg-green-50 p-4">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                      Alamat Lengkap <span className="text-red-400">*</span>
+                    </label>
+                    <textarea
+                      placeholder="Contoh: Jl. Sudirman No. 10, RT 01/RW 02 (Patokan: Samping Masjid)"
+                      value={formData.alamat}
+                      onChange={(e) => setFormData({ ...formData, alamat: e.target.value })}
+                      rows={2}
+                      className="w-full rounded-xl border border-green-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                      Estimasi Jarak dari Pasar Tohaga (km) <span className="text-red-400">*</span>
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={formData.jarak}
+                        onChange={(e) => setFormData({ ...formData, jarak: parseInt(e.target.value) || 1 })}
+                        className="w-20 rounded-xl border border-green-200 bg-white px-3 py-2.5 text-sm text-center text-gray-800 outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                      />
+                      <span className="text-xs font-medium text-green-800">
+                        Ongkir Rp 10.000 / 3 km
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
 

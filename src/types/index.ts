@@ -26,6 +26,7 @@ export interface CheckoutFormData {
   phone: string;
   metode: DeliveryMethod | "";
   alamat: string;
+  jarak: number;
   jamAntar: string;
   pembayaran: PaymentMethod | "";
   catatan: string;
