@@ -21,7 +21,7 @@ export default function RootLayout({
     <html lang="id">
       <body className={`${plusJakartaSans.className} bg-[#F7FBF2] text-gray-900`}>
         <Script
-          src="https://app.sandbox.midtrans.com/snap/snap.js"
+          src="https://app.midtrans.com/snap/snap.js"
           data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ""}
           strategy="beforeInteractive"
         />
